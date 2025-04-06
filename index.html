@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Miner Game Clone</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+  
+    html, body {
+      margin: 0;
+      padding: 0;
+      font-family: "FS Elliot Pro", sans-serif;
+      background-color: #020727;
+      color: #f3f3f3;
+      height: 100%;
+      width: 100%;
+    }
+  
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+  
+    .game-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      max-width: 500px;
+    }
+  
+    .miner-board__header {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      gap: 200px;
+      margin-bottom: 30px;
+      width: 100%;
+    }
+  
+    .miner-board__flank {
+      background: #020727;
+      padding: 8px;
+      border-radius: 5px;
+      min-width: 80px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+  
+    .miner-board__flank-title {
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+  
+    .miner-board__flank-amount {
+      font-size: 18px;
+      font-weight: bold;
+    }
+  
+    .miner-board__flank-img {
+      width: 28px;
+      margin: 10px 0;
+    }
+  
+    .miner-board__body {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 30px;
+    }
+  
+    .revealed .game-miner-cell__container {
+    display: none;
+}
+    .game-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 48px);
+      gap: 10px;
+    }
+  
+    .game-cell {
+      width: 48px;
+      height: 48px;
+      border-radius: 8px;
+      background: linear-gradient(180deg, #353333, #353333);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.3s ease;
+    }
+  
+    .game-cell.disabled {
+      cursor: not-allowed;
+    }
+  
+    .game-miner-cell__container {
+      transition: .25s ease-in;
+      position: absolute;
+      inset: 0;
+      background: #5e3aff;
+      box-shadow: inset 0 -3px 0 1px #2b28b7, inset 0 4px 24px 4px #0660e7;
+      border-radius: 8px;
+    }
+  
+    .game-control {
+      background: #1a2235;
+      padding: 15px;
+      border-radius: 10px;
+      margin-top: 16px;
+      width: 100%;
+    }
+  
+    .game-control__big-btn {
+      width: 100%;
+      height: 46px;
+      background: linear-gradient(94deg, #24abf8, #098bea 51%, #00b3ec);
+      color: white;
+      font-weight: bold;
+      font-size: 16px;
+      text-transform: uppercase;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      margin-bottom: 10px;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+  
+    .game-control__big-btn:hover {
+      filter: brightness(1.1);
+    }
+  
+    .game-bomb-selector {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+    }
+  
+    .bomb-option {
+      background: #222a3c;
+      border: none;
+      padding: 10px;
+      color: white;
+      border-radius: 8px;
+      cursor: pointer;
+      min-width: 50px;
+      font-size: 16px;
+      font-weight: bold;
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 700;
+    }
+  
+    .bomb-option.active {
+      border: 2px solid red;
+    }
+  
+    .bomb-img {
+      width: 20px;
+      height: 20px;
+      position: absolute;
+      bottom: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      opacity: 0;
+      transition: 0.3s ease;
+    }
+  
+    .bomb-option.active .bomb-img {
+      bottom: 5px;
+      opacity: 1;
+    }
+  
+    .game-control-input {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 120px;
+      border-radius: 8px;
+      padding: 2px;
+      background: #0a0d2c;
+      border: 2px solid transparent;
+      transition: border 0.2s ease;
+      position: relative;
+      overflow: hidden;
+    }
+  
+    .game-control-input.filled {
+      border: 2px solid #e0243b;
+      box-shadow: 0 0 8px #e0243b88;
+    }
+  
+    .game-control-input::before {
+      content: "";
+      width: 22px;
+      height: 30px;
+      background: url("https://up7ltg0x.top/_nuxt/img/bomb.7890603.svg") no-repeat center;
+      background-size: contain;
+      position: absolute;
+      left: 100%;
+      transform: translateX(0);
+      transition: transform 0.3s ease;
+      pointer-events: none;
+    }
+  
+    .game-control-input.filled::before {
+      transform: translateX(-40px);
+    }
+  
+    .game-control-input input {
+      width: 100%;
+      height: 48px;
+      border-radius: 8px;
+      border: none;
+      text-align: center;
+      font-size: 16px;
+      background: transparent;
+      color: #f3f3f3;
+      outline: none;
+    }
+  
+    @media screen and (max-width: 480px) {
+      body {
+        padding: 10px;
+      }
+  
+      .miner-board__header {
+        flex-direction: row;
+        justify-content: space-around;
+        margin-bottom: 20px;
+      }
+  
+      .miner-board__flank-img {
+        width: 24px;
+        margin: 6px 0;
+      }
+  
+      .game-grid {
+        grid-template-columns: repeat(5, 40px);
+        gap: 6px;
+      }
+  
+      .game-cell {
+        width: 40px;
+        height: 40px;
+      }
+  
+      .game-control-input input {
+        height: 40px;
+      }
+  
+      .game-control__big-btn {
+        height: 46px;
+        font-size: 14px;
+      }
+  
+      .bomb-option {
+        font-size: 14px;
+        min-width: 44px;
+        padding: 8px;
+      }
+  
+      .bomb-img {
+        width: 16px;
+        height: 16px;
+      }
+  
+      .miner-board__flank {
+        min-width: 60px;
+      }
+    }
+  
+    #custom-input {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700; /* Жирное начертание */
+    font-size: 16px; /* Можно подстроить размер */
+    padding: 8px;
+    color: #ffffff;
+  }
+
+    .icon {
+      width: 24px;
+      height: 24px;
+      opacity: 0;
+      transform: scale(0.5);
+      transition: all 0.4s ease;
+    }
+  
+    .revealed .icon {
+      opacity: 1;
+      transform: scale(1);
+    }
+  
+    .game-cell.bomb-cell .icon {
+      animation: bounceBomb 0.5s ease-out;
+    }
+  
+    @keyframes bounceBomb {
+      0% {
+        transform: scale(0.5) translateY(-10px);
+        opacity: 0;
+      }
+      50% {
+        transform: scale(1.2) translateY(5px);
+        opacity: 1;
+      }
+      100% {
+        transform: scale(1) translateY(0);
+        opacity: 1;
+      }
+    }
+    .modal-warning {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #1e1e1e;
+  color: #fff;
+  padding: 14px 24px 18px;
+  border-radius: 14px;
+  font-size: 16px;
+  font-weight: 500;
+  z-index: 9999;
+  font-family: 'Orbitron', sans-serif !important;
+  font-weight: 700;
+  font-family: 'Orbitron', sans-serif;
+  box-shadow: inset 0 0 0 2px #ff3c3c, 0 4px 12px rgba(0, 0, 0, 0.4);
+  animation: fadeInOut 3s ease-in-out forwards;
+  overflow: hidden;
+}
+
+.modal-warning .progress-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 4px;
+  background-color: #ff3c3c;
+  animation: progressShrink 3s linear forwards;
+  width: 100%;
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+}
+
+.modal-warning.hidden {
+  display: none;
+}
+
+@keyframes fadeInOut {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -20px);
+  }
+  10%, 90% {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -20px);
+  }
+}
+
+@keyframes progressShrink {
+  0% {
+    width: 100%;
+  }
+  100% {
+    width: 0%;
+  }
+}
+
+.logo-fixed {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  z-index: 999;
+}
+
+.logo-fixed img {
+  height: 36px;
+  width: auto;
+  max-width: 160px;
+}
+
+@media screen and (max-width: 480px) {
+  .logo-fixed {
+    top: 12px;
+    left: 12px;
+  }
+
+  .logo-fixed img {
+    height: 28px;
+    max-width: 120px;
+  }
+}
+
+
+    /* Новый стиль: клетка с алмазом */
+    .game-cell.diamond-cell {
+      background-color: #1c1c2c !important;
+      box-shadow: inset 0 0 0 3px #2ce652, 0 0 8px rgba(0, 255, 115, 0.3);
+    }
+  
+    @keyframes glowDiamond {
+      0% {
+        box-shadow: inset 0 0 0 0 #00ff88, inset 0 0 0 0 #00ff8855;
+      }
+      100% {
+        box-shadow: inset 0 0 0 3px #00ff88, inset 0 0 12px 4px #00ff8855;
+      }
+    }
+  
+    /* Новый стиль: клетка с бомбой */
+    .game-cell.bomb-cell {
+    background-color: #1c1c2c !important;
+    box-shadow: inset 0 0 0 3px #e0243b, 0 0 8px rgba(255, 0, 0, 0.4);
+  }
+    @keyframes glowBomb {
+      0% {
+        box-shadow: inset 0 0 0 0 #ff2e2e, inset 0 0 0 0 #ff2e2e55;
+      }
+      100% {
+        box-shadow: inset 0 0 0 3px #ff2e2e, inset 0 0 12px 4px #ff2e2e55;
+      }
+    }
+
+    .text-logo {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  z-index: 999;
+}
+
+.text-logo a {
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 700;
+  font-size: 22px;
+  color: #ffffff;
+  text-decoration: none;
+  letter-spacing: 1px;
+  background: linear-gradient(90deg, #00ffe0, #00aaff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+@media screen and (max-width: 480px) {
+  .text-logo {
+    top: 12px;
+    left: 12px;
+  }
+
+  .text-logo a {
+    font-size: 18px;
+  }
+}
+
+  </style>
+  
+
+</head>
+<body>
+  
+  <div class="game-container">
+    <div class="miner-board">
+      <div class="miner-board__header">
+        <div class="miner-board__flank">
+          <div class="miner-board__flank-title"></div>
+          <img src="https://up7ltg0x.top/img/games/miner/diamond.svg" class="miner-board__flank-img" alt="">
+          <span id="diamond-count" class="miner-board__flank-amount">22</span>
+        </div>
+        <div class="miner-board__flank">
+          <div class="miner-board__flank-title"></div>
+          <img src="https://up7ltg0x.top/_nuxt/img/bomb.7890603.svg" class="miner-board__flank-img" alt="">
+          <span id="bomb-count" class="miner-board__flank-amount">3</span>
+        </div>
+      </div>
+      <div class="miner-board__body">
+        <div id="game-grid" class="game-grid"></div>
+      </div>
+    </div>
+    <div id="modal-warning" class="modal-warning hidden">
+      <div class="modal-text">Пожалуйста, подождите окончание выдачи сигналов !</div>
+      <div class="progress-bar"></div>
+    </div>
+    <div class="game-logo">
+      <img src="https://up7ltg0x.top/img/logo-main.svg" alt="Game Logo" />
+    </div>
+    <div class="text-logo">
+      <a>МИНЁР</a>
+    </div>
+    
+    <div class="game-control">
+      <button class="game-control__big-btn" onclick="startGame()">Играть</button>
+      <div class="game-bomb-selector">
+        <button class="bomb-option" onclick="selectBomb(this, 3)">3
+          <img src="https://up7ltg0x.top/_nuxt/img/bomb.7890603.svg" class="bomb-img" alt="">
+        </button>
+        <button class="bomb-option" onclick="selectBomb(this, 5)">5
+          <img src="https://up7ltg0x.top/_nuxt/img/bomb.7890603.svg" class="bomb-img" alt="">
+        </button>
+        <button class="bomb-option" onclick="selectBomb(this, 10)">10
+          <img src="https://up7ltg0x.top/_nuxt/img/bomb.7890603.svg" class="bomb-img" alt="">
+        </button>
+        <button class="bomb-option" onclick="selectBomb(this, 16)">16
+          <img src="https://up7ltg0x.top/_nuxt/img/bomb.7890603.svg" class="bomb-img" alt="">
+        </button>
+        <button class="bomb-option" onclick="selectBomb(this, 24)">24
+          <img src="https://up7ltg0x.top/_nuxt/img/bomb.7890603.svg" class="bomb-img" alt="">
+        </button>
+        <div class="game-control-input">
+          <input placeholder="Изменить" id="custom-input" />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let selectedBombs = 3;
+    let bombPositions = [];
+    let isAnimating = false;
+  
+    function animateCount(id, newValue) {
+      const el = document.getElementById(id);
+      const start = parseInt(el.textContent, 10) || 0;
+      const duration = 400;
+      const startTime = performance.now();
+  
+      function update(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        el.textContent = Math.round(start + (newValue - start) * progress);
+        if (progress < 1) requestAnimationFrame(update);
+      }
+  
+      requestAnimationFrame(update);
+    }
+  
+    function selectBomb(button, count) {
+      document.querySelectorAll(".bomb-option").forEach(btn => btn.classList.remove("active"));
+      document.querySelector(".game-control-input").classList.remove("filled");
+      button.classList.add("active");
+      selectedBombs = count;
+      animateCount("bomb-count", count);
+      animateCount("diamond-count", 25 - count);
+      document.getElementById("custom-input").value = "";
+    }
+  
+    function customBombs(input) {
+      let raw = input.value.trim();
+      const inputWrapper = input.closest(".game-control-input");
+      if (raw === "") {
+        inputWrapper.classList.remove("filled");
+        document.querySelectorAll(".bomb-option").forEach(btn => btn.classList.remove("active"));
+        return;
+      }
+      let value = parseInt(raw, 10);
+      if (isNaN(value) || value < 1) value = 1;
+      else if (value > 2) value = 24;
+      input.value = value;
+      selectedBombs = value;
+      let matched = false;
+      document.querySelectorAll(".bomb-option").forEach(btn => {
+        const btnValue = parseInt(btn.textContent.trim(), 10);
+        if (btnValue === value) {
+          btn.classList.add("active");
+          matched = true;
+        } else {
+          btn.classList.remove("active");
+        }
+      });
+      if (!matched) {
+        inputWrapper.classList.add("filled");
+      } else {
+        inputWrapper.classList.remove("filled");
+      }
+      animateCount("bomb-count", value);
+      animateCount("diamond-count", 25 - value);
+    }
+  
+    function disableAllCells() {
+      document.querySelectorAll(".game-cell").forEach(cell => cell.classList.add("disabled"));
+    }
+  
+    function generateBombs() {
+      bombPositions = [];
+      while (bombPositions.length < selectedBombs) {
+        const rand = Math.floor(Math.random() * 25);
+        if (!bombPositions.includes(rand)) {
+          bombPositions.push(rand);
+        }
+      }
+    }
+  
+    function showModalWarning(message) {
+      const modal = document.getElementById("modal-warning");
+      const text = modal.querySelector(".modal-text");
+      text.textContent = message;
+      modal.classList.remove("hidden");
+  
+      setTimeout(() => {
+        modal.classList.add("hidden");
+      }, 3000);
+    }
+  
+    function startGame() {
+      if (isAnimating) {
+        showModalWarning("Пожалуйста, подождите окончание выдачи сигналов.");
+        return;
+      }
+  
+      isAnimating = true;
+      const playButton = document.getElementById("play-button");
+      if (playButton) playButton.disabled = true;
+  
+      generateBombs();
+      const grid = document.getElementById("game-grid");
+      grid.innerHTML = "";
+  
+      for (let i = 0; i < 25; i++) {
+        const cell = document.createElement("div");
+        cell.className = "game-cell";
+  
+        const cover = document.createElement("div");
+        cover.className = "game-miner-cell__container";
+        cell.appendChild(cover);
+  
+        const icon = document.createElement("img");
+        icon.className = "icon";
+        icon.src = "";
+        icon.alt = "item";
+        cell.appendChild(icon);
+  
+        grid.appendChild(cell);
+      }
+  
+      const revealOrder = Array.from({ length: 25 }, (_, i) => i).sort(() => Math.random() - 0.5);
+  
+      const firstIndex = revealOrder[0];
+      setTimeout(() => {
+        const firstCell = grid.children[firstIndex];
+        const firstIcon = firstCell.querySelector(".icon");
+        const isFirstBomb = bombPositions.includes(firstIndex);
+        firstIcon.src = isFirstBomb
+          ? "https://up7ltg0x.top/_nuxt/img/bomb.7890603.svg"
+          : "https://up7ltg0x.top/img/games/miner/diamond.svg";
+        firstCell.classList.add("revealed", isFirstBomb ? "bomb-cell" : "diamond-cell");
+      }, 0);
+  
+      for (let i = 1; i < revealOrder.length; i++) {
+        const index = revealOrder[i];
+        setTimeout(() => {
+          const cell = grid.children[index];
+          const icon = cell.querySelector(".icon");
+          const isBomb = bombPositions.includes(index);
+          icon.src = isBomb
+            ? "https://up7ltg0x.top/_nuxt/img/bomb.7890603.svg"
+            : "https://up7ltg0x.top/img/games/miner/diamond.svg";
+          cell.classList.add("revealed", isBomb ? "bomb-cell" : "diamond-cell");
+  
+          if (i === revealOrder.length - 1) {
+            isAnimating = false;
+            if (playButton) playButton.disabled = false;
+          }
+        }, i * 700);
+      }
+    }
+  
+    function renderEmptyGrid() {
+      const grid = document.getElementById("game-grid");
+      grid.innerHTML = "";
+      for (let i = 0; i < 25; i++) {
+        const cell = document.createElement("div");
+        cell.className = "game-cell";
+  
+        const cover = document.createElement("div");
+        cover.className = "game-miner-cell__container";
+        cell.appendChild(cover);
+  
+        const icon = document.createElement("img");
+        icon.className = "icon";
+        icon.src = "";
+        icon.alt = "item";
+        cell.appendChild(icon);
+  
+        grid.appendChild(cell);
+      }
+    }
+  
+    document.addEventListener("DOMContentLoaded", () => {
+      renderEmptyGrid();
+  
+      const customInput = document.getElementById("custom-input");
+      if (customInput) {
+        customInput.addEventListener("input", () => {
+          customBombs(customInput);
+        });
+      }
+  
+      const playButton = document.getElementById("play-button");
+      if (playButton) {
+        playButton.addEventListener("click", startGame);
+      }
+    });
+  </script>
+</body>
+</html>
